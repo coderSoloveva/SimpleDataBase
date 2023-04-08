@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class Table {
-    List<Map<String, Object>> data;
+    public List<Map<String, Object>> data;
 
     public Table(List<Map<String, Object>> data) {
         this.data = data;
@@ -19,7 +19,6 @@ public class Table {
         data = new ArrayList<>();
     }
 
-
     public List<Map<String, Object>> execute(String request) throws Exception {
         List<Map<String, Object>> rows = null;
         RequestEntity requestEntity = Parser.parse(request);
@@ -27,7 +26,7 @@ public class Table {
             rows = insert(requestEntity);
         } else if (requestEntity.command == RequestEntity.Command.UPDATE) {
             rows = update(requestEntity);
-        }else if (requestEntity.command == RequestEntity.Command.SELECT) {
+        } else if (requestEntity.command == RequestEntity.Command.SELECT) {
             rows = select(requestEntity);
         } else if (requestEntity.command == RequestEntity.Command.DELETE) {
             rows = delete(requestEntity);
@@ -101,19 +100,24 @@ public class Table {
             String key = orderKeys.get(k);
             System.out.printf("| %10s ", key);
         }
-        String del = "-".repeat(orderKeys.size()*13+1);
-        System.out.println();
-        System.out.println(del);
-        for (int i = 0; i < data.size(); i++) {
-            Map<String, Object> row = data.get(i);
-            for (int k = 0; k < orderKeys.size(); k++) {
-                String key = orderKeys.get(k);
-                Object object =  row.get(key);
-                System.out.printf("| %10s ", object);
+        if (orderKeys.size() > 0) {
+            String del = "-".repeat(orderKeys.size() * 13 + 1);
+            System.out.println();
+            System.out.println(del);
+            for (int i = 0; i < data.size(); i++) {
+                Map<String, Object> row = data.get(i);
+                for (int k = 0; k < orderKeys.size(); k++) {
+                    String key = orderKeys.get(k);
+                    Object object = row.get(key);
+                    System.out.printf("| %10s ", object);
+                }
+                System.out.println('|');
             }
-            System.out.println('|');
+            System.out.println(del);
+        } else {
+            System.out.println("Table is empty");
+            System.out.println();
         }
-        System.out.println(del);
     }
 
     private boolean isRightString(Map<String, Object> row, RequestEntity.Disjunction[] disjunctions) throws Exception {
@@ -146,22 +150,34 @@ public class Table {
         if (key instanceof String) {
             Object cell = row.get(key);
             if (cell != null) {
-                isRightString = comparison(comparison, cell, value);
+                isRightString = comparison(comparison.operator, cell, value);
             }
         } else {
-            isRightString = comparison(comparison, key, value);
+            isRightString = comparison(comparison.operator, key, value);
         }
         return isRightString;
     }
 
-    private boolean comparison(RequestEntity.Comparison comparison, Object key, Object value) {
+    private static boolean comparison(RequestEntity.Operator operator, Object key, Object value) {
         boolean isRight = false;
-        switch (comparison.operator) {
+        switch (operator) {
             case EQUALS:
-                isRight = key.equals(value);
+                if (key == null && value == null) {
+                    isRight = true;
+                } else if (key == null || value == null) {
+                    isRight = false;
+                } else {
+                    isRight = key.equals(value);
+                }
                 break;
             case NOT_EQUALS:
-                isRight = !key.equals(value);
+                if (key == null && value == null) {
+                    isRight = false;
+                } else if (key == null || value == null) {
+                    isRight = true;
+                } else {
+                    isRight = !key.equals(value);
+                }
                 break;
             case LIKE:
                 if (key instanceof String && value instanceof String) {
@@ -174,32 +190,44 @@ public class Table {
                 }
                 break;
             case LESS:
-                if (key instanceof Number && value instanceof Number) {
-                    isRight = ((Number)key).doubleValue() < ((Number)value).doubleValue();
+                if (key instanceof Double && value instanceof Double) {
+                    isRight =  (Double)key <  (Double)value;
+                } else if (key instanceof Long && value instanceof Long) {
+                    isRight = (Long)key <  (Long)value;
                 }
+                break;
             case LESS_OR_EQUALS:
-                if (key instanceof Number && value instanceof Number) {
-                    isRight = ((Number)key).doubleValue() <= ((Number)value).doubleValue();
+                if (key instanceof Double && value instanceof Double) {
+                    isRight =  (Double)key <=  (Double)value;
+                } else if (key instanceof Long && value instanceof Long) {
+                    isRight = (Long)key <=  (Long)value;
                 }
+                break;
             case MORE:
-                if (key instanceof Number && value instanceof Number) {
-                    isRight = ((Number)key).doubleValue() > ((Number)value).doubleValue();
+                if (key instanceof Double && value instanceof Double) {
+                    isRight =  (Double)key >  (Double)value;
+                } else if (key instanceof Long && value instanceof Long) {
+                    isRight = (Long)key >  (Long)value;
                 }
+                break;
             case MORE_OR_EQUALS:
-                if (key instanceof Number && value instanceof Number) {
-                    isRight = ((Number)key).doubleValue() >= ((Number)value).doubleValue();
+                if (key instanceof Double && value instanceof Double) {
+                    isRight =  (Double)key >=  (Double)value;
+                } else if (key instanceof Long && value instanceof Long) {
+                    isRight =  (Long)key >=  (Long)value;
                 }
+                break;
         }
         return isRight;
     }
 
-    private boolean matchesIgnoreCase(String source, String target) {
+    private static boolean matchesIgnoreCase(String source, String target) {
         source = source.toUpperCase(Locale.ROOT);
         target = target.toUpperCase(Locale.ROOT);
         return source.matches(target);
     }
 
-    private String getPattern(String str) {
+    private static String getPattern(String str) {
         return str.replaceAll("%", ".*");
     }
 
@@ -238,7 +266,11 @@ public class Table {
             value = null;
         } else {
             try {
-                value = Double.valueOf(str);
+                if (str.contains(".")) {
+                    value = Double.valueOf(str);
+                } else {
+                    value = Long.valueOf(str);
+                }
             } catch (Exception e) {
                 throw new Exception("Значение \"" + str + "\" некорректно");
             }
