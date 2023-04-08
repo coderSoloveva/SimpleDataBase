@@ -69,7 +69,7 @@ public class Parser {
         RequestEntity.Comparison comparison = new RequestEntity.Comparison();
         List<String> titles = getTitles(comparisonString);
         comparisonString = removeTitles(comparisonString);
-        Pattern pattern = Pattern.compile("(.*)(<|>|!=|<=|>=|=|like|ilike)(.*)");
+        Pattern pattern = Pattern.compile("(.*?)(<|>|!=|<=|>=|=|I?LIKE)(.*)");
         Matcher matcher = pattern.matcher(comparisonString);
         if (matcher.find()) {
             String leftPart = matcher.group(1);

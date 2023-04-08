@@ -166,4 +166,59 @@ public class TestTable {
         assertEquals(1, result.size());
         assertEquals(1, table.data.size());
     }
+
+    @Test
+    public void testDeleteWithConditionMore() throws Exception {
+        String request = "DELETE VALUES WHERE 'id' > 1 ";
+        List<Map<String, Object>> result = table.execute(request);
+        assertEquals(1, result.size());
+        assertEquals(1, table.data.size());
+    }
+
+    @Test
+    public void testDeleteWithConditionLess() throws Exception {
+        String request = "DELETE VALUES WHERE 'id' < 1 ";
+        List<Map<String, Object>> result = table.execute(request);
+        assertEquals(0, result.size());
+        assertEquals(2, table.data.size());
+    }
+
+    @Test
+    public void testDeleteWithWrongLikeCondition() throws Exception {
+        String request = "DELETE VALUES WHERE 'id' like 1 ";
+        List<Map<String, Object>> result = table.execute(request);
+        assertEquals(0, result.size());
+        assertEquals(2, table.data.size());
+    }
+    @Test
+    public void testDeleteWithLikeCondition() throws Exception {
+        String request = "DELETE VALUES WHERE 'lastName' like '%о%' ";
+        List<Map<String, Object>> result = table.execute(request);
+        assertEquals(2, result.size());
+        assertEquals(0, table.data.size());
+    }
+
+    @Test
+    public void testDeleteWithLikeConditionEmptyResult() throws Exception {
+        String request = "DELETE VALUES WHERE 'lastName' like '%О%' OR 'lastName' ilike '%kkkО%'";
+        List<Map<String, Object>> result = table.execute(request);
+        assertEquals(0, result.size());
+        assertEquals(2, table.data.size());
+    }
+
+    @Test
+    public void testDeleteWithILikeCondition() throws Exception {
+        String request = "DELETE VALUES WHERE 'lastName' Ilike '%О%' ";
+        List<Map<String, Object>> result = table.execute(request);
+        assertEquals(2, result.size());
+        assertEquals(0, table.data.size());
+    }
+
+    @Test
+    public void testDeleteWithILikeConditionEmptyResult() throws Exception {
+        String request = "DELETE VALUES WHERE 'lastName' Ilike '%O%' AND 'lastName' Ilike '%3O%' ";
+        List<Map<String, Object>> result = table.execute(request);
+        assertEquals(0, result.size());
+        assertEquals(2, table.data.size());
+    }
 }
