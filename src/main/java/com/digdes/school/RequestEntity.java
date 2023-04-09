@@ -8,11 +8,6 @@ public class RequestEntity {
         DELETE
     }
 
-    public enum BooleanOperator {
-        AND,
-        OR
-    }
-
     public enum Operator {
         EQUALS,
         NOT_EQUALS,

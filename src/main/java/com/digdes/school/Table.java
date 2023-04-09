@@ -151,6 +151,8 @@ public class Table {
             Object cell = row.get(key);
             if (cell != null) {
                 isRightString = comparison(comparison.operator, cell, value);
+            } else if (cell == null && value == null) {
+                isRightString = true;
             }
         } else {
             isRightString = comparison(comparison.operator, key, value);
@@ -158,7 +160,7 @@ public class Table {
         return isRightString;
     }
 
-    private static boolean comparison(RequestEntity.Operator operator, Object key, Object value) {
+    private static boolean comparison(RequestEntity.Operator operator, Object key, Object value) throws Exception {
         boolean isRight = false;
         switch (operator) {
             case EQUALS:
@@ -166,8 +168,10 @@ public class Table {
                     isRight = true;
                 } else if (key == null || value == null) {
                     isRight = false;
-                } else {
+                } else if (key.getClass() == value.getClass()) {
                     isRight = key.equals(value);
+                } else {
+                    throw new Exception("В сравнении: " + key + " " + operator + " " + value + " участвует тип, который не поддерживается данным оператором");
                 }
                 break;
             case NOT_EQUALS:
@@ -175,46 +179,60 @@ public class Table {
                     isRight = false;
                 } else if (key == null || value == null) {
                     isRight = true;
-                } else {
+                } else if (key.getClass() == value.getClass()) {
                     isRight = !key.equals(value);
+                } else {
+                    throw new Exception("В сравнении: " + key + " " + operator + " " + value + " участвует тип, который не поддерживается данным оператором");
                 }
                 break;
             case LIKE:
                 if (key instanceof String && value instanceof String) {
                     isRight = ((String) key).matches(getPattern((String) value));
+                } else {
+                    throw new Exception("В сравнении: " + key + " " + operator + " " + value + " участвует тип, который не поддерживается данным оператором");
                 }
                 break;
             case ILIKE:
                 if (key instanceof String && value instanceof String) {
                     isRight = matchesIgnoreCase((String) key, getPattern((String) value));
+                } else {
+                    throw new Exception("В сравнении: " + key + " " + operator + " " + value + " участвует тип, который не поддерживается данным оператором");
                 }
                 break;
             case LESS:
                 if (key instanceof Double && value instanceof Double) {
-                    isRight =  (Double)key <  (Double)value;
+                    isRight = (Double) key < (Double) value;
                 } else if (key instanceof Long && value instanceof Long) {
-                    isRight = (Long)key <  (Long)value;
+                    isRight = (Long) key < (Long) value;
+                } else {
+                    throw new Exception("В сравнении: " + key + " " + operator + " " + value + " участвует тип, который не поддерживается данным оператором");
                 }
                 break;
             case LESS_OR_EQUALS:
                 if (key instanceof Double && value instanceof Double) {
-                    isRight =  (Double)key <=  (Double)value;
+                    isRight = (Double) key <= (Double) value;
                 } else if (key instanceof Long && value instanceof Long) {
-                    isRight = (Long)key <=  (Long)value;
+                    isRight = (Long) key <= (Long) value;
+                } else {
+                    throw new Exception("В сравнении: " + key + " " + operator + " " + value + " участвует тип, который не поддерживается данным оператором");
                 }
                 break;
             case MORE:
                 if (key instanceof Double && value instanceof Double) {
-                    isRight =  (Double)key >  (Double)value;
+                    isRight = (Double) key > (Double) value;
                 } else if (key instanceof Long && value instanceof Long) {
-                    isRight = (Long)key >  (Long)value;
+                    isRight = (Long) key > (Long) value;
+                } else {
+                    throw new Exception("В сравнении: " + key + " " + operator + " " + value + " участвует тип, который не поддерживается данным оператором");
                 }
                 break;
             case MORE_OR_EQUALS:
                 if (key instanceof Double && value instanceof Double) {
-                    isRight =  (Double)key >=  (Double)value;
+                    isRight = (Double) key >= (Double) value;
                 } else if (key instanceof Long && value instanceof Long) {
-                    isRight =  (Long)key >=  (Long)value;
+                    isRight = (Long) key >= (Long) value;
+                } else {
+                    throw new Exception("В сравнении: " + key + " " + operator + " " + value + " участвует тип, который не поддерживается данным оператором");
                 }
                 break;
         }
@@ -229,6 +247,14 @@ public class Table {
 
     private static String getPattern(String str) {
         return str.replaceAll("%", ".*");
+    }
+
+    private List<String> getKeys() {
+        List<String> keys = new ArrayList<>();
+        for (int i = 0; i < data.size(); i++) {
+            keys.addAll(data.get(i).keySet());
+        }
+        return keys;
     }
 
     private static String getKey(String pair, String regex) throws Exception {
